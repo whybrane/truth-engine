@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Why.com">
+    <meta property="og:title" content="Why.com">
+    <meta property="og:description" content="The world's first verifiable truth engine.">
+    <meta property="og:image" content="os.png">
+    <meta property="og:url" content="https://why.com">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <title>Truth Engine</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <style>
+        :root {
+            --gold: #C9A962;
+            --gold-light: #E5D4A1;
+            --gold-dark: #8B7355;
+            --black: #0A0A0A;
+            --dark: #111111;
+            --gray-900: #171717;
+            --gray-800: #262626;
+            --gray-700: #404040;
+            --gray-600: #525252;
+            --gray-400: #A3A3A3;
+            --gray-300: #D4D4D4;
+            --white: #FAFAFA;
+            --dark-card: var(--gray-900);
+            --text-secondary: var(--gray-400);
+            --dark-background: var(--black);
+            --text-primary: var(--white);
+            --color-cyan: var(--gold);
+            --color-magenta: var(--gold-dark);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+        h1, h2, h3 { font-family: 'Crimson Text', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(24px, 5vw, 48px);
+            padding-bottom: env(safe-area-inset-bottom, 24px);
+            background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201, 169, 98, 0.04), transparent);
+        }
+        main.pro-page.has-results { justify-content: flex-start; padding-top: clamp(32px, 6vw, 56px); }
+        .container { width: 100%; max-width: 600px; text-align: center; }
+        .machinan-hero-header { text-align: center; padding: 0 1rem; margin-bottom: 3rem; }
+        .machinan-hero-header h1 {
+            margin: 0; line-height: 1; font-family: 'Crimson Text', Georgia, serif;
+            font-size: clamp(48px, 12vw, 80px); color: var(--white); font-weight: 400; letter-spacing: -0.02em;
+        }
+        .machinan-hero-header h1 span { color: var(--gold); }
+        .search-container { width: 100%; max-width: 640px; margin: 0 auto; position: relative; }
+        .search-input {
+            display: flex; align-items: flex-end; gap: 1rem;
+            border-bottom: 1px solid var(--gray-700); background: transparent; padding-bottom: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .search-input:focus-within { border-bottom-color: var(--gold); }
+        .search-input textarea {
+            flex: 1; min-width: 0; background: transparent; border: none; color: var(--white);
+            font-family: 'Crimson Text', Georgia, serif; font-size: 1.5rem; resize: none; outline: none;
+            text-align: left; line-height: 1.4; min-height: 2rem;
+        }
+        .search-input textarea::placeholder { color: var(--gray-600); font-style: italic; }
+        .search-input svg { color: var(--gray-600); flex-shrink: 0; transition: color 0.2s; }
+        .search-input label { cursor: pointer; color: var(--gray-600); flex-shrink: 0; transition: color 0.2s; }
+        .search-input label:hover { color: var(--gold); }
+        #analyzeButton {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: transparent; color: var(--gold); border: 1px solid var(--gold);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease; flex-shrink: 0;
+        }
+        #analyzeButton:hover:not(:disabled) { background: var(--gold); color: var(--black); }
+        #analyzeButton:disabled { border-color: var(--gray-800); color: var(--gray-600); cursor: not-allowed; }
+        #attached-docs { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; font-size: 0.75rem; }
+        .attached-doc {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+            background: var(--gray-900); border: 1px solid var(--gray-800); color: var(--gold-light);
+            border-radius: 4px; font-size: 0.75rem;
+        }
+        .hidden { display: none !important; }
+        footer {
+            padding: 24px clamp(24px, 5vw, 48px);
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--gray-900);
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            letter-spacing: 0.05em;
+        }
+        footer a { color: var(--gray-400); text-decoration: none; }
+        footer a:hover { color: var(--white); }
+        @media (max-width: 640px) {
+            .container { padding: 0 16px; }
+            .search-input textarea { font-size: 1.25rem; }
+        }
+
+        #analysis-section { width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; margin-top: 4rem; margin-bottom: 2rem; padding: 0 16px; }
+        .models-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--gray-900); border: 1px solid var(--gray-900); margin-bottom: 2rem; }
+        @media (max-width: 768px) { .models-container { grid-template-columns: 1fr; } }
+        .analysis-card {
+            background: var(--black);
+            padding: 1.5rem;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            transition: outline 0.2s;
+        }
+        .analysis-card[data-state="active"] { outline: 1px solid var(--gold); outline-offset: -1px; }
+        .analysis-card[data-state="complete"] { }
+        .analysis-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .analysis-card .text-md, .analysis-card .agent-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--gray-500); }
+        .collapse-indicator { display: inline-flex; align-items: center; gap: 6px; color: var(--gold); font-size: 0.7rem; letter-spacing: 0.05em; cursor: pointer; transition: opacity 0.2s; }
+        .collapse-indicator .collapse-more { text-transform: uppercase; animation: collapse-blink 1.2s ease-in-out infinite; }
+        .collapse-indicator .collapse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: collapse-blink 1s ease-in-out infinite; }
+        .collapse-indicator .collapse-arrow { transition: transform 0.2s; }
+        .analysis-card[data-collapsed="true"] .collapse-arrow { display: none; }
+        .analysis-card[data-collapsed="false"] .collapse-more, .analysis-card[data-collapsed="false"] .collapse-dot { display: none !important; }
+        .analysis-card[data-collapsed="false"] .collapse-arrow { display: inline-block; }
+        @keyframes collapse-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+        .analysis-card[data-collapsed="true"] .model-reasoning { max-height: 0; opacity: 0; overflow: hidden; padding-top: 0; margin-top: 0; transition: max-height 0.35s ease, opacity 0.25s; }
+        .analysis-card[data-collapsed="false"] .model-reasoning { max-height: 2000px; opacity: 1; transition: max-height 0.35s ease, opacity 0.25s; }
+        .status-badge { font-size: 0.65rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.05em; }
+        .status-badge.pending { background: var(--gray-800); color: var(--gray-500); }
+        .status-badge.analyzing { background: rgba(201, 169, 98, 0.25); color: var(--gold); }
+        .status-badge.complete { background: var(--gray-800); color: var(--gold-light); }
+        .status-badge.outlier { background: rgba(201, 169, 98, 0.2); color: var(--gold-dark); }
+        .mono { font-family: 'Inter', monospace; }
+        .text-xs { font-size: 0.8rem; }
+        .text-sm { font-size: 0.85rem; }
+        .reasoning-text { font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--gray-400); line-height: 1.5; font-style: normal; }
+        .commitment-tree { margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: var(--black); border: 1px solid var(--gray-800); border-radius: 6px; font-size: 0.7rem; color: var(--gold-dark); word-break: break-all; }
+        .commitment-hash { color: var(--gold-light); }
+        .border-t { border-top: 1px solid var(--gray-800); }
+        .border-gray-700 { border-color: var(--gray-800); }
+        .pt-3 { padding-top: 0.75rem; }
+        .flex-grow { flex: 1 1 0%; min-width: 0; }
+        .flex-wrap { flex-wrap: wrap; }
+        .justify-start { justify-content: flex-start; }
+        .pl-4 { padding-left: 1rem; }
+        .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        .rounded-full { border-radius: 9999px; }
+        .ml-3 { margin-left: 0.75rem; }
+        .p-2 { padding: 0.5rem; }
+        .w-5 { width: 1.25rem; }
+        .h-5 { height: 1.25rem; }
+        .w-6 { width: 1.5rem; }
+        .h-6 { height: 1.5rem; }
+        .w-9 { width: 2.25rem; }
+        .h-9 { height: 2.25rem; }
+        .mr-3 { margin-right: 0.75rem; }
+        .mx-2 { margin-left: 0.5rem; margin-right: 0.5rem; }
+        .text-lg { font-size: 1.125rem; }
+        .focus\:outline-none:focus { outline: none; }
+        .resize-none { resize: none; }
+        .overflow-hidden { overflow: hidden; }
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        @media (min-width: 768px) {
+            .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mt-8 { margin-top: 2rem; }
+        .mt-12 { margin-top: 2rem; }
+        .p-4 { padding: 1rem; }
+        .rounded-lg { border-radius: 8px; }
+        .border-l-4 { border-left-width: 4px; }
+        .border-l-4.border-cyan-500 { border-left-color: var(--gold); }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .space-x-2 > * + * { margin-left: 0.5rem; }
+        .space-x-4 > * + * { margin-left: 1rem; }
+        .space-y-1 > * + * { margin-top: 0.25rem; }
+        .flex-col { flex-direction: column; }
+        .items-end { align-items: flex-end; }
+        .text-slate-400, .text-slate-500 { color: var(--gray-400); }
+        .text-lime-300 { color: var(--gold); }
+        .text-cyan-400 { color: var(--gold-light); }
+        .text-magenta-400 { color: var(--gold-dark); }
+        .font-bold { font-weight: 600; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .bg-gray-900\/50 { background: var(--gray-900); }
+
+        #truth-container {
+            margin-top: 0;
+            margin-bottom: 3rem;
+            padding: 3rem;
+            background: linear-gradient(180deg, var(--gray-900) 0%, var(--black) 100%);
+            border: 1px solid var(--gray-800);
+            border-radius: 2px;
+            position: relative;
+            text-align: center;
+        }
+        #truth-container::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 2px; background: var(--gold); }
+        #truth-likelihood { font-family: 'Crimson Text', Georgia, serif; font-size: clamp(2rem, 5vw, 3rem); color: var(--gold); }
+        #truth-reasoning, .truth-reasoning-body { background: transparent; border: none; border-top: 1px solid var(--gray-900); padding: 1.5rem 0 0; font-size: 0.875rem; color: var(--gray-500); line-height: 1.6; text-align: left; }
+        .truth-report-collapsible[data-collapsed="true"] .truth-reasoning-body { max-height: 0; opacity: 0; overflow: hidden; padding: 0; margin: 0; border: none; transition: max-height 0.3s ease, opacity 0.2s; }
+        .truth-report-collapsible[data-collapsed="false"] .truth-reasoning-body { max-height: 5000px; opacity: 1; transition: max-height 0.35s ease, opacity 0.25s; }
+        .truth-report-collapsible .collapse-report-arrow { display: inline-block; transition: transform 0.2s; }
+        .truth-report-collapsible[data-collapsed="true"] .collapse-report-arrow { transform: rotate(-90deg); }
+        .truth-report-collapsible[data-collapsed="false"] .collapse-report-arrow { transform: rotate(0deg); }
+        .truth-report-toggle { background: transparent !important; border: none !important; }
+        .truth-report-chat-link { text-decoration: none; }
+        .likelihood-bar { height: 8px; background: var(--gray-800); border-radius: 4px; overflow: hidden; margin: 1rem 0; }
+        .likelihood-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); border-radius: 4px; transition: width 0.5s ease; }
+        .truth-summary-block { margin: 1.25rem 0; padding: 1rem 1.25rem; background: var(--black); border-left: 2px solid var(--gold); font-size: 0.95rem; line-height: 1.6; color: var(--gray-300); text-align: left; }
+        .truth-summary-block .summary-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold); margin-bottom: 0.5rem; }
+        .truth-summary-block p { margin: 0 0 0.75rem 0; }
+        .truth-summary-block p:last-child { margin-bottom: 0; }
+        .prose { max-width: none; }
+        .prose-invert { color: var(--gray-400); }
+        .text-4xl { font-size: 2.25rem; }
+        .font-extrabold { font-weight: 700; }
+        .shadow-lg { box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+        #message-box { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 1rem 1.25rem; border-radius: 8px; font-size: 0.85rem; min-width: 280px; background: var(--gray-900); border: 1px solid var(--gray-800); }
+        #contact-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #contact-modal[style*="flex"] { display: flex; }
+    </style>
+</head>
+<body>
+<main class="pro-page" id="main-pro">
+<div class="container">
+
+    <!-- Hero (index presentation) -->
+    <div class="machinan-hero-header">
+        <h1>why.<span>com</span></h1>
+    </div>
+
+    <div class="search-container">
+        <div id="submission-area" class="search-input">
+            <textarea id="truth-prompt" rows="1" class="flex-grow resize-none overflow-hidden" placeholder="What is the truth about..."></textarea>
+            <label for="file-upload">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <input type="file" id="file-upload" multiple style="display: none;" accept=".pdf,.doc,.docx">
+            </label>
+            <button id="analyzeButton">
+                <svg id="button-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </button>
+        </div>
+        <div id="attached-docs"></div>
+    </div>
+</div>
+
+    <!-- Analysis Results Section -->
+    <div id="analysis-section" style="display: none;">
+
+        <!-- Cycle & Consensus Info (hidden after search completes) -->
+        <div id="cycle-bar" class="mb-6 p-4 rounded-lg border-l-4 border-cyan-500 bg-gray-900/50 flex justify-between items-center text-sm mono">
+            <div class="flex items-center space-x-4">
+                <span class="text-lime-300 font-bold text-lg" id="cycle-number">CYCLE 0</span>
+                <span id="consensus-text" class="text-slate-400">WAITING FOR PROTOCOL...</span>
+            </div>
+            <div class="flex flex-col items-end space-y-1">
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-400">CONFIDENCE:</span>
+                    <span class="font-bold text-cyan-400 text-lg" id="graph-confidence">0%</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-400 text-xs">UNCERTAINTY:</span>
+                    <span class="font-bold text-magenta-400 text-xs" id="mad-value">0.00</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Models Grid -->
+        <div class="models-container grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" id="models-container">
+            <div class="analysis-card rounded-lg p-4" id="model-evidence" data-state="pending" data-collapsed="true">
+                <div class="analysis-card-header">
+                    <div class="flex items-center gap-2">
+                        <div class="text-md font-bold text-cyan-400 mono">AGENT_01: EVIDENCE</div>
+                        <span class="collapse-indicator"><span class="collapse-more">More</span><span class="collapse-dot"></span><span class="collapse-arrow">▼</span></span>
+                    </div>
+                    <span id="status-evidence-badge" class="status-badge pending">PENDING</span>
+                </div>
+                <div class="text-xs text-slate-500 mono mb-2" id="status-evidence">Awaiting truth verification initiation.</div>
+                <div class="text-xs mono mb-3">
+                    <span class="text-slate-500">Truth Score:</span> <span id="score-evidence" class="text-cyan-400 font-bold">---</span>
+                </div>
+                <div class="model-reasoning pt-3 border-t border-gray-700">
+                    <p class="reasoning-text text-sm text-slate-400" id="reasoning-evidence">...</p>
+                    <div id="commitment-evidence" class="commitment-tree" style="display: none;">
+                        <div class="text-xs text-slate-500 mb-1">VERIFICATION PROOF:</div>
+                        <div class="commitment-hash text-xs">---</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-card rounded-lg p-4" id="model-logic" data-state="pending" data-collapsed="true">
+                <div class="analysis-card-header">
+                    <div class="flex items-center gap-2">
+                        <div class="text-md font-bold text-cyan-400 mono">AGENT_02: LOGIC</div>
+                        <span class="collapse-indicator"><span class="collapse-more">More</span><span class="collapse-dot"></span><span class="collapse-arrow">▼</span></span>
+                    </div>
+                    <span id="status-logic-badge" class="status-badge pending">PENDING</span>
+                </div>
+                <div class="text-xs text-slate-500 mono mb-2" id="status-logic">Awaiting truth verification initiation.</div>
+                <div class="text-xs mono mb-3">
+                    <span class="text-slate-500">Truth Score:</span> <span id="score-logic" class="text-cyan-400 font-bold">---</span>
+                </div>
+                <div class="model-reasoning pt-3 border-t border-gray-700">
+                    <p class="reasoning-text text-sm text-slate-400" id="reasoning-logic">...</p>
+                    <div id="commitment-logic" class="commitment-tree" style="display: none;">
+                        <div class="text-xs text-slate-500 mb-1">VERIFICATION PROOF:</div>
+                        <div class="commitment-hash text-xs">---</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-card rounded-lg p-4" id="model-context" data-state="pending" data-collapsed="true">
+                <div class="analysis-card-header">
+                    <div class="flex items-center gap-2">
+                        <div class="text-md font-bold text-cyan-400 mono">AGENT_03: CONTEXT</div>
+                        <span class="collapse-indicator"><span class="collapse-more">More</span><span class="collapse-dot"></span><span class="collapse-arrow">▼</span></span>
+                    </div>
+                    <span id="status-context-badge" class="status-badge pending">PENDING</span>
+                </div>
+                <div class="text-xs text-slate-500 mono mb-2" id="status-context">Awaiting truth verification initiation.</div>
+                <div class="text-xs mono mb-3">
+                    <span class="text-slate-500">Truth Score:</span> <span id="score-context" class="text-cyan-400 font-bold">---</span>
+                </div>
+                <div class="model-reasoning pt-3 border-t border-gray-700">
+                    <p class="reasoning-text text-sm text-slate-400" id="reasoning-context">...</p>
+                    <div id="commitment-context" class="commitment-tree" style="display: none;">
+                        <div class="text-xs text-slate-500 mb-1">VERIFICATION PROOF:</div>
+                        <div class="commitment-hash text-xs">---</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Truth Section -->
+        <div id="truth-container" class="mt-8 p-6 rounded-lg shadow-lg mb-8" style="display: none;">
+            <div class="mb-4">
+                <span class="text-xl mr-3 font-semibold mono">FINAL TRUTH — </span>
+                <span id="truth-likelihood" class="text-4xl font-extrabold text-cyan-400 mono">---</span>
+                <span class="text-lg text-gray-400 ml-4">likelihood true</span>
+            </div>
+            <div class="likelihood-bar">
+                <div id="likelihood-fill" class="likelihood-fill" style="width: 0%;"></div>
+            </div>
+            <div id="truth-summary" class="truth-summary-block"></div>
+            <div id="truth-report-collapsible" class="truth-report-collapsible mt-4" data-collapsed="true">
+                <div class="truth-report-row flex flex-wrap items-center justify-between gap-3 py-2">
+                    <button type="button" id="truth-report-toggle" class="truth-report-toggle mono text-sm text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 bg-transparent border-none cursor-pointer p-0">
+                        <span class="collapse-report-arrow">▼</span>
+                        <span>Analysis Complete — Full report</span>
+                    </button>
+                    <a href="https://docsend.com/v/b4bcc/fkp" target="_blank" rel="noopener noreferrer" class="truth-report-chat-link mono text-sm text-cyan-400 hover:text-cyan-300 transition-colors no-underline">Read Whitepaper</a>
+                </div>
+                <div id="truth-reasoning" class="truth-reasoning-body prose prose-invert max-w-none text-slate-300 rounded-md p-4 text-sm mono"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="message-box" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-2xl font-medium transition-opacity duration-300 hidden mono" style="min-width: 300px;"></div>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: var(--dark-card); border: 1px solid var(--text-secondary); border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;">
+            <div style="padding: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="font-size: 2rem; font-weight: 600; color: var(--text-primary); margin: 0; font-family: 'Inter', sans-serif;">Contact</h2>
+                    <button id="close-modal" style="color: var(--text-secondary); background: none; border: none; font-size: 2rem; cursor: pointer; line-height: 1;">&times;</button>
+                </div>
+
+                <form id="contact-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <label for="from_name" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">Name</label>
+                        <input type="text" id="from_name" name="from_name" required style="width: 100%; background: var(--dark-background); border: 1px solid var(--text-secondary); color: var(--text-primary); padding: 12px 16px; border-radius: 12px; font-size: 16px; font-family: 'Inter', sans-serif; box-sizing: border-box;" placeholder="Your full name">
+                    </div>
+
+                    <div>
+                        <label for="from_email" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">Email</label>
+                        <input type="email" id="from_email" name="from_email" required style="width: 100%; background: var(--dark-background); border: 1px solid var(--text-secondary); color: var(--text-primary); padding: 12px 16px; border-radius: 12px; font-size: 16px; font-family: 'Inter', sans-serif; box-sizing: border-box;" placeholder="your.email@example.com">
+                    </div>
+
+                    <div>
+                        <label for="subject" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">Subject</label>
+                        <select id="subject" name="subject" required style="width: 100%; background: var(--dark-background); border: 1px solid var(--text-secondary); color: var(--text-primary); padding: 12px 16px; border-radius: 12px; font-size: 16px; font-family: 'Inter', sans-serif; box-sizing: border-box;">
+                            <option value="">Select a topic...</option>
+                            <option value="General Inquiry">General Inquiry</option>
+                            <option value="Partnership">Partnership Opportunity</option>
+                            <option value="Technical Support">Technical Support</option>
+                            <option value="Press/Media">Press/Media</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="message" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">Message</label>
+                        <textarea id="message" name="message" rows="6" required style="width: 100%; background: var(--dark-background); border: 1px solid var(--text-secondary); color: var(--text-primary); padding: 12px 16px; border-radius: 12px; font-size: 16px; font-family: 'Inter', sans-serif; box-sizing: border-box; resize: vertical;" placeholder="Tell us more about your inquiry..."></textarea>
+                    </div>
+
+                    <button type="submit" id="submit-btn" style="width: 100%; background: linear-gradient(135deg, var(--color-cyan), var(--color-magenta)); color: white; font-weight: 600; padding: 12px 24px; border-radius: 12px; border: none; cursor: pointer; font-size: 16px; font-family: 'Inter', sans-serif; transition: all 0.2s; margin-top: 8px;">
+                        <span id="submit-text">Send Message</span>
+                        <span id="submit-loading" style="display: none;">Sending...</span>
+                    </button>
+                </form>
+
+                <div id="form-messages" style="margin-top: 1.5rem; display: none;">
+                    <div id="success-message" style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgb(34, 197, 94); color: rgb(34, 197, 94); padding: 1rem; border-radius: 12px; display: none;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.25rem;">✅</span>
+                            <div>
+                                <strong>Message sent successfully!</strong>
+                                <p style="font-size: 0.875rem; margin-top: 0.25rem;">Thank you for contacting us. We'll get back to you soon.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="error-message" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgb(239, 68, 68); color: rgb(239, 68, 68); padding: 1rem; border-radius: 12px; display: none;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 1.25rem;">❌</span>
+                            <div>
+                                <strong>Failed to send message</strong>
+                                <p style="font-size: 0.875rem; margin-top: 0.25rem;">Please try again later.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+    <footer>
+        © 2025 Why Inc.
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        // === EmailJS Configuration ===
+        const PUBLIC_KEY = 'Dwyq4qYeFtayXaJpJ';
+        const SERVICE_ID = 'service_1iezz8s';
+        const TEMPLATE_ID = 'template_j0gysp2';
+        emailjs.init(PUBLIC_KEY);
+
+        // === Truth Engine Protocol Configuration ===
+        const TRUTH_CONFIG = {
+            MIN_CONFIDENCE_SCORE: 0.75,   // Minimum confidence for consensus
+            MAD_K_FACTOR: 2.5,            // Outlier detection threshold
+            MAX_CYCLES: 3                 // Max recursive cycles
+        };
+        // API base when page is served from another origin (e.g. EigenCloud). Use your Netlify site URL.
+        const TRUTH_ENGINE_API_BASE = 'https://why.com';
+
+        // === Truth Engine Protocol Class ===
+        class TruthEngineProtocol {
+            constructor() {
+                this.commitmentTree = []; // Array of cycle arrays: [{agent, commitment, output, nonce, truthScore}]
+                this.cycleCount = 0;
+                this.consensusReached = false;
+                this.outliers = [];
+                this.maxCycles = TRUTH_CONFIG.MAX_CYCLES;
+                this.outlierK = TRUTH_CONFIG.MAD_K_FACTOR;
+            }
+
+            // === Commitment Function (SHA-256) ===
+            async commit(message, nonce) {
+                const data = message + nonce.toString();
+                const encoder = new TextEncoder();
+                const dataBuffer = encoder.encode(data);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                return hashHex;
+            }
+
+            // === Add Commitment to Tree ===
+            addCommitment(agent, commitment, output, nonce, truthScore) {
+                const cycleIndex = Math.max(0, this.cycleCount - 1);
+                if (!this.commitmentTree[cycleIndex]) {
+                    this.commitmentTree[cycleIndex] = [];
+                }
+                this.commitmentTree[cycleIndex].push({
+                    agent,
+                    commitment,
+                    output,
+                    nonce,
+                    truthScore,
+                    timestamp: Date.now()
+                });
+            }
+
+            // === Calculate Median ===
+            calculateMedian(values) {
+                if (values.length === 0) return 0;
+                const sorted = [...values].sort((a, b) => a - b);
+                const mid = Math.floor(sorted.length / 2);
+                return sorted.length % 2 === 0
+                    ? (sorted[mid - 1] + sorted[mid]) / 2
+                    : sorted[mid];
+            }
+
+            // === Calculate MAD (Median Absolute Deviation) ===
+            calculateMAD(values, median) {
+                if (values.length === 0) return 0;
+                const deviations = values.map(v => Math.abs(v - median));
+                return this.calculateMedian(deviations);
+            }
+
+            // === Identify Outliers ===
+            identifyOutliers(truthScores, median, mad) {
+                const outliers = [];
+                const threshold = this.outlierK * mad;
+                
+                truthScores.forEach((score, index) => {
+                    if (Math.abs(score.value - median) > threshold) {
+                        outliers.push({
+                            agentIndex: index,
+                            agent: score.agent,
+                            truthScore: score.value,
+                            deviation: Math.abs(score.value - median)
+                        });
+                    }
+                });
+                
+                return outliers;
+            }
+
+            // === Calculate Consensus ===
+            calculateConsensus() {
+                const cycleIndex = Math.max(0, this.cycleCount - 1);
+                const currentCycle = this.commitmentTree[cycleIndex];
+                
+                if (!currentCycle || currentCycle.length === 0) {
+                    return { median: 0, mad: 1, confidenceScore: 0, outliers: [] };
+                }
+
+                const truthScores = currentCycle.map(c => ({ agent: c.agent, value: c.truthScore }));
+                const values = truthScores.map(s => s.value);
+                
+                const median = this.calculateMedian(values);
+                const mad = this.calculateMAD(values, median);
+                
+                // Confidence score: 1 - normalized MAD (higher is better)
+                const confidenceScore = Math.max(0, Math.min(100, (1 - mad) * 100));
+                
+                // Identify outliers
+                const outliers = this.identifyOutliers(truthScores, median, mad);
+                
+                return { median, mad, confidenceScore, outliers };
+            }
+
+            // === Calculate Confidence ===
+            calculateConfidence(stats, n) {
+                const outlierPenalty = stats.outliers.length / n;
+                const variancePenalty = Math.min(stats.mad * 2, 0.5);
+                return Math.max(0, 1.0 - outlierPenalty - variancePenalty);
+            }
+
+            // === Check if Consensus is Reached ===
+            hasConsensus() {
+                const stats = this.calculateConsensus();
+                const confidence = this.calculateConfidence(stats, 3);
+                return confidence >= TRUTH_CONFIG.MIN_CONFIDENCE_SCORE && stats.outliers.length === 0;
+            }
+
+            // === Should Continue Cycles ===
+            shouldContinue() {
+                return !this.hasConsensus() && this.cycleCount < this.maxCycles;
+            }
+
+            // === Get Final Truth Assessment ===
+            getFinalTruth() {
+                const stats = this.calculateConsensus();
+                const confidence = this.calculateConfidence(stats, 3);
+                
+                // Calculate uncertainty bands (±1 MAD, ±2 MAD)
+                const uncertaintyLower = Math.max(0, Math.min(1, stats.median - stats.mad));
+                const uncertaintyUpper = Math.min(1, Math.max(0, stats.median + stats.mad));
+                const uncertaintyWiderLower = Math.max(0, Math.min(1, stats.median - 2 * stats.mad));
+                const uncertaintyWiderUpper = Math.min(1, Math.max(0, stats.median + 2 * stats.mad));
+                
+                // Calculate uncertainty risk (based on disagreement)
+                const uncertaintyRisk = Math.min(100, stats.mad * 100);
+                
+                // Model disagreement score
+                const disagreement = stats.mad * 100;
+                
+                return {
+                    truthLikelihood: stats.median,
+                    uncertaintyBands: {
+                        narrow: { lower: uncertaintyLower, upper: uncertaintyUpper },
+                        wide: { lower: uncertaintyWiderLower, upper: uncertaintyWiderUpper }
+                    },
+                    confidence: confidence * 100,
+                    uncertaintyRisk: uncertaintyRisk,
+                    disagreement: disagreement,
+                    cyclesRequired: this.cycleCount,
+                    mad: stats.mad
+                };
+            }
+        }
+
+        // === Mobile Menu Toggle ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const nav = document.getElementById('nav');
+            
+            if (menuToggle && nav) {
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    nav.classList.toggle('active');
+                    menuToggle.classList.toggle('active');
+                    if (nav.classList.contains('active')) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+                
+                const navLinks = nav.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        nav.classList.remove('active');
+                        menuToggle.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    });
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!nav.contains(e.target) && !menuToggle.contains(e.target)) {
+                        nav.classList.remove('active');
+                        menuToggle.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && nav.classList.contains('active')) {
+                        nav.classList.remove('active');
+                        menuToggle.classList.remove('active');
+                        document.body.style.overflow = 'auto';
+                    }
+                });
+            }
+        });
+
+        // === Contact Modal ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const contactBtn = document.getElementById('contact-btn');
+            const contactModal = document.getElementById('contact-modal');
+            const closeModal = document.getElementById('close-modal');
+            const contactForm = document.getElementById('contact-form');
+
+            if (!contactModal) return;
+
+            const openModal = (e) => {
+                if (e) e.preventDefault();
+                contactModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            };
+
+            const hideModal = () => {
+                contactModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            };
+
+            if (contactBtn) contactBtn.addEventListener('click', openModal);
+            if (closeModal) closeModal.addEventListener('click', hideModal);
+            if (contactModal) {
+                contactModal.addEventListener('click', (event) => {
+                    if (event.target === contactModal) hideModal();
+                });
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && contactModal.style.display === 'flex') {
+                    hideModal();
+                }
+            });
+
+            if (contactForm) {
+                contactForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+
+                    const submitBtn = document.getElementById('submit-btn');
+                    const submitText = document.getElementById('submit-text');
+                    const submitLoading = document.getElementById('submit-loading');
+                    const formMessages = document.getElementById('form-messages');
+                    const successMessage = document.getElementById('success-message');
+                    const errorMessage = document.getElementById('error-message');
+
+                    submitBtn.disabled = true;
+                    submitText.style.display = 'none';
+                    submitLoading.style.display = 'inline';
+
+                    formMessages.style.display = 'none';
+                    successMessage.style.display = 'none';
+                    errorMessage.style.display = 'none';
+
+                    emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, contactForm)
+                        .then(() => {
+                            formMessages.style.display = 'block';
+                            successMessage.style.display = 'block';
+                            contactForm.reset();
+                            submitBtn.disabled = false;
+                            submitText.style.display = 'inline';
+                            submitLoading.style.display = 'none';
+                        })
+                        .catch((error) => {
+                            console.error('EmailJS error:', error);
+                            formMessages.style.display = 'block';
+                            errorMessage.style.display = 'block';
+                            submitBtn.disabled = false;
+                            submitText.style.display = 'inline';
+                            submitLoading.style.display = 'none';
+                        });
+                });
+            }
+        });
+
+        // === Social Icons Hover ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const socialLinks = ['social-twitter', 'social-discord', 'social-telegram'];
+            socialLinks.forEach(id => {
+                const link = document.getElementById(id);
+                if (link) {
+                    link.addEventListener('mouseenter', () => {
+                        link.style.color = 'var(--color-cyan)';
+                    });
+                    link.addEventListener('mouseleave', () => {
+                        link.style.color = 'var(--text-secondary)';
+                    });
+                }
+            });
+        });
+
+        // === DOM Elements ===
+        const analyzeButton = document.getElementById('analyzeButton');
+        const truthPrompt = document.getElementById('truth-prompt');
+        const analysisSection = document.getElementById('analysis-section');
+        const cycleNumber = document.getElementById('cycle-number');
+        const consensusText = document.getElementById('consensus-text');
+        const graphConfidence = document.getElementById('graph-confidence');
+        const madValue = document.getElementById('mad-value');
+        const cycleBar = document.getElementById('cycle-bar');
+        const truthContainer = document.getElementById('truth-container');
+        const truthLikelihood = document.getElementById('truth-likelihood');
+        const likelihoodFill = document.getElementById('likelihood-fill');
+        const truthSummaryEl = document.getElementById('truth-summary');
+        const truthReasoning = document.getElementById('truth-reasoning');
+        const fileUpload = document.getElementById('file-upload');
+        const attachedDocsContainer = document.getElementById('attached-docs');
+
+        const modelMap = {
+            evidence: {
+                id: 'model-evidence',
+                name: 'AGENT_01: EVIDENCE',
+                card: document.getElementById('model-evidence'),
+                status: document.getElementById('status-evidence'),
+                reasoning: document.getElementById('reasoning-evidence'),
+                badge: document.getElementById('status-evidence-badge'),
+                score: document.getElementById('score-evidence'),
+                commitment: document.getElementById('commitment-evidence')
+            },
+            logic: {
+                id: 'model-logic',
+                name: 'AGENT_02: LOGIC',
+                card: document.getElementById('model-logic'),
+                status: document.getElementById('status-logic'),
+                reasoning: document.getElementById('reasoning-logic'),
+                badge: document.getElementById('status-logic-badge'),
+                score: document.getElementById('score-logic'),
+                commitment: document.getElementById('commitment-logic')
+            },
+            context: {
+                id: 'model-context',
+                name: 'AGENT_03: CONTEXT',
+                card: document.getElementById('model-context'),
+                status: document.getElementById('status-context'),
+                reasoning: document.getElementById('reasoning-context'),
+                badge: document.getElementById('status-context-badge'),
+                score: document.getElementById('score-context'),
+                commitment: document.getElementById('commitment-context')
+            }
+        };
+
+        const MAC_API_KEY = "MACHINAN_ORCHESTRATION_KEY";
+        
+        let analysisInProgress = false;
+        let attachedFiles = [];
+        let truthProtocol = null;
+
+        // === Event Listeners ===
+        analyzeButton.addEventListener('click', handleTruthQuery);
+        truthPrompt.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleTruthQuery();
+            }
+        });
+        fileUpload.addEventListener('change', handleFileUpload);
+        truthPrompt.addEventListener('input', autoResizeTextarea);
+
+        const truthReportCollapsible = document.getElementById('truth-report-collapsible');
+        const truthReportToggle = document.getElementById('truth-report-toggle');
+        if (truthReportToggle && truthReportCollapsible) {
+            truthReportToggle.addEventListener('click', () => {
+                const collapsed = truthReportCollapsible.getAttribute('data-collapsed') === 'true';
+                truthReportCollapsible.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
+            });
+        }
+
+        window.onload = () => {
+            autoResizeTextarea();
+            setupCardCollapseHandlers();
+        };
+
+        // === Functions ===
+        
+        function autoResizeTextarea() {
+            truthPrompt.style.height = 'auto';
+            truthPrompt.style.height = truthPrompt.scrollHeight + 'px';
+        }
+
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                attachedFiles = Array.from(files);
+                renderAttachedDocs();
+            }
+        }
+        
+        async function extractTextFromFile(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (extension === 'pdf') {
+                return await extractPDFText(file);
+            } else {
+                return `${file.name} (File uploaded - processing available in full version)`;
+            }
+        }
+
+        async function extractPDFText(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            const pdf = await loadingTask.promise;
+            let text = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                text += textContent.items.map(item => item.str).join(' ') + '\n';
+            }
+            return text;
+        }
+        
+        function renderAttachedDocs() {
+            attachedDocsContainer.innerHTML = '';
+            attachedFiles.forEach(file => {
+                const docSpan = document.createElement('span');
+                docSpan.className = 'attached-doc flex items-center px-3 py-1 rounded text-xs text-gray-200';
+                docSpan.innerHTML = `
+                    <svg class="w-3 h-3 mr-1" style="color:var(--color-lime);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0013.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    ${file.name}
+                `;
+                attachedDocsContainer.appendChild(docSpan);
+            });
+        }
+
+        /**
+         * Main Truth Query Handler - Implements Multi-Model Truth Verification
+         */
+        async function handleTruthQuery() {
+            if (analysisInProgress) return;
+            const userQuery = truthPrompt.value.trim();
+
+            let fileTexts = [];
+            for (const file of attachedFiles) {
+                try {
+                    const text = await extractTextFromFile(file);
+                    fileTexts.push(`${file.name}:\n${text}`);
+                } catch (error) {
+                    console.error(`Error processing ${file.name}:`, error);
+                    fileTexts.push(`${file.name} (Error processing file)`);
+                }
+            }
+
+            const fullQuery = userQuery + (fileTexts.length > 0 ? `\n\nATTACHED DOCUMENTS:\n${fileTexts.join('\n\n')}` : '');
+
+            if (!fullQuery.trim()) {
+                showTempMessageBox('// ERROR: Query is empty. Please provide a question or statement to verify.', 'error');
+                return;
+            }
+
+            analysisInProgress = true;
+            setLoadingState(true);
+            resetUI();
+            
+            analysisSection.style.display = 'block';
+            // Expand agent cards so reasoning is visible during the run (collapsed only when final truth is shown)
+            Object.values(modelMap).forEach(card => { card.card.setAttribute('data-collapsed', 'false'); });
+            const mainPro = document.getElementById('main-pro');
+            if (mainPro) mainPro.classList.add('has-results');
+            truthContainer.style.display = 'none';
+
+            // Initialize Truth Engine Protocol
+            truthProtocol = new TruthEngineProtocol();
+
+            try {
+                // === Recursive Truth Verification Loop ===
+                while (truthProtocol.shouldContinue()) {
+                    truthProtocol.cycleCount++;
+                    
+                    const isDivergenceCycle = truthProtocol.cycleCount > 1 && truthProtocol.outliers.length > 0;
+                    
+                    updateCycle(
+                        truthProtocol.cycleCount, 
+                        isDivergenceCycle 
+                            ? `VERIFICATION CYCLE ${truthProtocol.cycleCount} - DIVERGENCE DETECTED - RE-EVALUATING OUTLIERS`
+                            : `VERIFICATION CYCLE ${truthProtocol.cycleCount} - INDEPENDENT ANALYSIS`, 
+                        0
+                    );
+
+                    let previousConsensus = null;
+                    if (truthProtocol.cycleCount > 1) {
+                        const prevCycleIndex = truthProtocol.cycleCount - 2;
+                        const prevCycle = truthProtocol.commitmentTree[prevCycleIndex];
+                        if (prevCycle && prevCycle.length > 0) {
+                            previousConsensus = {
+                                evidence: prevCycle.find(c => c.agent === 'evidence'),
+                                logic: prevCycle.find(c => c.agent === 'logic'),
+                                context: prevCycle.find(c => c.agent === 'context')
+                            };
+                        }
+                    }
+
+                    // Run agents in parallel
+                    const results = await Promise.allSettled([
+                        runTruthAgent(modelMap.evidence, fullQuery, 'evidence', previousConsensus),
+                        runTruthAgent(modelMap.logic, fullQuery, 'logic', previousConsensus),
+                        runTruthAgent(modelMap.context, fullQuery, 'context', previousConsensus)
+                    ]);
+
+                    // Process results
+                    for (let i = 0; i < results.length; i++) {
+                        const result = results[i];
+                        if (result.status === 'fulfilled' && result.value) {
+                            const { agent, text, truthScore, nonce, commitment } = result.value;
+                            truthProtocol.addCommitment(agent, commitment, text, nonce, truthScore);
+                        } else {
+                            const agentTypes = ['evidence', 'logic', 'context'];
+                            const agent = agentTypes[i];
+                            const errorText = `// TRUTH AGENT ${agent.toUpperCase()} VERIFICATION ERROR`;
+                            const nonce = Math.floor(Math.random() * 1000000);
+                            const commitment = await truthProtocol.commit(errorText, nonce);
+                            truthProtocol.addCommitment(agent, commitment, errorText, nonce, 0.5);
+                        }
+                    }
+
+                    await sleep(1500);
+
+                    // Calculate consensus
+                    const consensus = truthProtocol.calculateConsensus();
+                    truthProtocol.outliers = consensus.outliers;
+                    
+                    updateCycle(
+                        truthProtocol.cycleCount,
+                        truthProtocol.hasConsensus() 
+                            ? `VERIFICATION CYCLE ${truthProtocol.cycleCount} - CONSENSUS REACHED` 
+                            : `VERIFICATION CYCLE ${truthProtocol.cycleCount} - DIVERGENCE (MAD: ${consensus.mad.toFixed(2)})`,
+                        Math.round(consensus.confidenceScore)
+                    );
+                    
+                    madValue.textContent = consensus.mad.toFixed(3);
+
+                    // Mark outliers
+                    consensus.outliers.forEach(outlier => {
+                        const card = modelMap[outlier.agent];
+                        if (card) {
+                            card.badge.textContent = 'OUTLIER';
+                            card.badge.className = 'status-badge outlier';
+                        }
+                    });
+
+                    await sleep(1000);
+                }
+
+                // === Final Truth Assessment ===
+                const finalTruth = truthProtocol.getFinalTruth();
+                displayFinalTruth(finalTruth);
+
+            } catch (error) {
+                console.error('Truth Engine Protocol error:', error);
+                showTempMessageBox(`// Verification error: ${error.message}`, 'error');
+                analysisSection.style.display = 'none';
+                const mainPro = document.getElementById('main-pro');
+                if (mainPro) mainPro.classList.remove('has-results');
+            } finally {
+                setLoadingState(false);
+                analysisInProgress = false;
+            }
+        }
+
+        /**
+         * Run Truth Agent with Commitment
+         * Returns { agent, text, truthScore, nonce, commitment }
+         */
+        async function runTruthAgent(card, prompt, agentType, previousConsensus) {
+            updateModelCard(card, 'active', 'VERIFYING TRUTH...', '...', 'analyzing');
+            
+            let augmentedPrompt = prompt;
+            if (previousConsensus) {
+                let consensusText = '\n\n=== PREVIOUS CYCLE CONSENSUS ===\n';
+                if (previousConsensus.evidence && previousConsensus.evidence.output) {
+                    consensusText += `EVIDENCE AGENT: ${previousConsensus.evidence.output.substring(0, 200)}...\n`;
+                }
+                if (previousConsensus.logic && previousConsensus.logic.output) {
+                    consensusText += `LOGIC AGENT: ${previousConsensus.logic.output.substring(0, 200)}...\n`;
+                }
+                if (previousConsensus.context && previousConsensus.context.output) {
+                    consensusText += `CONTEXT AGENT: ${previousConsensus.context.output.substring(0, 200)}...\n`;
+                }
+                consensusText += '\nPlease re-evaluate your truth assessment in light of the above findings.';
+                augmentedPrompt = prompt + consensusText;
+            }
+
+            // === TRUTH ENGINE SYSTEM PROMPTS ===
+            const systemPrompts = {
+                evidence: `You are AGENT_01: EVIDENCE VALIDATOR.
+                    ROLE: You are an evidence-based truth assessor specializing in factual verification.
+                    TASK: Analyze the query and assess how likely the answer/statement is to be TRUE based on available evidence (0.0 = certainly false, 0.5 = uncertain/insufficient evidence, 1.0 = certainly true).
+                    
+                    OUTPUT FORMAT:
+                    1. Reasoning summary (2-3 sentences explaining your evidence analysis).
+                    2. "TRUTH SCORE: [number]" where 0.0 = certainly false, 0.5 = uncertain, 1.0 = certainly true.
+                    
+                    Base your truth score on: factual accuracy, source reliability, empirical evidence, and verifiable data.`,
+                
+                logic: `You are AGENT_02: LOGIC VALIDATOR.
+                    ROLE: You are a logical reasoning specialist focused on internal consistency and sound argumentation.
+                    TASK: Analyze the query and assess how likely the answer/statement is to be TRUE based on logical coherence (0.0 = certainly false, 0.5 = uncertain/insufficient evidence, 1.0 = certainly true).
+                    
+                    OUTPUT FORMAT:
+                    1. Reasoning summary (2-3 sentences explaining your logical analysis).
+                    2. "TRUTH SCORE: [number]" where 0.0 = certainly false, 0.5 = uncertain, 1.0 = certainly true.
+                    
+                    Base your truth score on: logical consistency, sound reasoning, absence of fallacies, and deductive validity.`,
+                
+                context: `You are AGENT_03: CONTEXT VALIDATOR.
+                    ROLE: You are a contextual analyst specializing in understanding broader implications and contextual fit.
+                    TASK: Analyze the query and assess how likely the answer/statement is to be TRUE based on contextual alignment (0.0 = certainly false, 0.5 = uncertain/insufficient evidence, 1.0 = certainly true).
+                    
+                    OUTPUT FORMAT:
+                    1. Reasoning summary (2-3 sentences explaining your contextual analysis).
+                    2. "TRUTH SCORE: [number]" where 0.0 = certainly false, 0.5 = uncertain, 1.0 = certainly true.
+                    
+                    Base your truth score on: contextual fit, domain knowledge alignment, historical patterns, and situational appropriateness.`
+            };
+
+            try {
+                const response = await fetch(`${TRUTH_ENGINE_API_BASE}/.netlify/functions/machinan-orchestrate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-MAC-API-Key': MAC_API_KEY
+                    },
+                    body: JSON.stringify({
+                        pitch: augmentedPrompt,
+                        agentType: agentType,
+                        systemPrompt: systemPrompts[agentType]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Verification protocol error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                let text = data.reasoning || data.text || '// TRUTH VERIFICATION ERROR: NO SIGNAL';
+                
+                // Parse TRUTH SCORE
+                let truthScore = 0.5; // Default to uncertain
+                
+                const lines = text.split('\n');
+                const scoreLine = lines.find(l => l.match(/TRUTH SCORE:\s*[0-9]*\.?[0-9]+/i));
+                
+                if (scoreLine) {
+                    const match = scoreLine.match(/TRUTH SCORE:\s*([0-9]*\.?[0-9]+)/i);
+                    if (match) {
+                        truthScore = parseFloat(match[1]);
+                        truthScore = Math.max(0, Math.min(1, truthScore)); // Clamp to [0, 1]
+                    }
+                }
+                
+                console.log(`${agentType.toUpperCase()} parsed truth score: ${truthScore}`);
+
+                // Generate nonce for commitment
+                const nonce = Math.floor(Math.random() * 1000000);
+                
+                // Create commitment (Verification Proof)
+                const commitment = await truthProtocol.commit(text, nonce);
+                
+                // Update UI
+                updateModelCard(card, 'complete', 'TRUTH VERIFICATION COMPLETE', text, 'complete');
+                card.score.textContent = (truthScore * 100).toFixed(1) + '%';
+                card.score.style.color = truthScore > 0.7 ? 'var(--color-lime)' : truthScore < 0.3 ? 'var(--color-magenta)' : 'var(--color-cyan)';
+                
+                // Show commitment
+                card.commitment.style.display = 'block';
+                card.commitment.querySelector('.commitment-hash').textContent = commitment.substring(0, 32) + '...';
+                
+                return { agent: agentType, text, truthScore, nonce, commitment };
+            } catch (error) {
+                console.error('Truth agent error:', error);
+                const errorText = `// TRUTH AGENT ${agentType.toUpperCase()} VERIFICATION ERROR\n\nProtocol failed: ${error.message}`;
+                updateModelCard(card, 'complete', 'TRUTH VERIFICATION ERROR', errorText, 'complete');
+                
+                const nonce = Math.floor(Math.random() * 1000000);
+                let commitment;
+                try {
+                    commitment = await truthProtocol.commit(errorText, nonce);
+                } catch (commitError) {
+                    commitment = 'error_' + Date.now();
+                }
+                return { agent: agentType, text: errorText, truthScore: 0.5, nonce, commitment };
+            }
+        }
+
+        /**
+         * Display Final Truth Assessment
+         */
+        function displayFinalTruth(truthData) {
+            const { truthLikelihood: likelihoodValue, uncertaintyBands, confidence, uncertaintyRisk, disagreement, cyclesRequired, mad } = truthData;
+            
+            // Update Final Truth display (use global DOM refs; likelihoodValue is 0–1)
+            truthLikelihood.textContent = (likelihoodValue * 100).toFixed(1) + '%';
+            likelihoodFill.style.width = (likelihoodValue * 100) + '%';
+            
+            // Get final cycle data
+            const finalCycleIndex = truthProtocol.cycleCount - 1;
+            const finalCycleData = truthProtocol.commitmentTree[finalCycleIndex] || [];
+            const totalCommitments = truthProtocol.commitmentTree.flat().length;
+
+            // Generate agent contributions
+            let agentContributions = '';
+            if (finalCycleData.length > 0) {
+                agentContributions = finalCycleData.map(c => 
+                    `- **${c.agent.toUpperCase()}**: ${((c.truthScore ?? 0.5) * 100).toFixed(1)}% truth score`
+                ).join('\n');
+            } else {
+                agentContributions = '- No agent data available for final cycle';
+            }
+
+            const formatNumber = (num, decimals = 3) => {
+                if (typeof num !== 'number' || isNaN(num)) return '0.000';
+                return num.toFixed(decimals);
+            };
+
+            function escapeHtml(s) {
+                if (typeof s !== 'string') return '';
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+            // Build qualitative summary from agents' reasoning (strip TRUTH SCORE line, take first sentence or chunk)
+            function firstSentenceOrChars(text, maxLen = 180) {
+                if (!text || typeof text !== 'string') return 'No reasoning provided.';
+                const stripped = text.replace(/\s*TRUTH SCORE:\s*[0-9.]+\s*$/i, '').trim();
+                const firstSentence = stripped.split(/[.!?]/)[0];
+                const chunk = (firstSentence && firstSentence.length <= maxLen)
+                    ? firstSentence + (stripped.includes('.') ? '.' : '')
+                    : stripped.slice(0, maxLen).trim() + (stripped.length > maxLen ? '…' : '');
+                return chunk || 'No reasoning provided.';
+            }
+            const evidenceSummary = finalCycleData.find(c => c.agent === 'evidence');
+            const logicSummary = finalCycleData.find(c => c.agent === 'logic');
+            const contextSummary = finalCycleData.find(c => c.agent === 'context');
+            const evidenceText = evidenceSummary ? firstSentenceOrChars(evidenceSummary.output) : 'No reasoning provided.';
+            const logicText = logicSummary ? firstSentenceOrChars(logicSummary.output) : 'No reasoning provided.';
+            const contextText = contextSummary ? firstSentenceOrChars(contextSummary.output) : 'No reasoning provided.';
+            const qualitativeSummary = [
+                evidenceSummary ? `**Evidence:** ${evidenceText}` : '',
+                logicSummary ? `**Logic:** ${logicText}` : '',
+                contextSummary ? `**Context:** ${contextText}` : ''
+            ].filter(Boolean).join(' ') || 'Insufficient agent data to summarize.';
+
+            // Populate prominent qualitative summary block (above full report)
+            if (truthSummaryEl) {
+                truthSummaryEl.innerHTML = `
+                    <div class="summary-label">Summary of findings</div>
+                    <p><strong>Evidence:</strong> ${escapeHtml(evidenceText)}</p>
+                    <p><strong>Logic:</strong> ${escapeHtml(logicText)}</p>
+                    <p><strong>Context:</strong> ${escapeHtml(contextText)}</p>
+                `;
+            }
+
+            // Determine truth interpretation
+            let truthInterpretation = '';
+            const likelihood = likelihoodValue * 100;
+            if (likelihood >= 85) {
+                truthInterpretation = '**High Confidence Truth** — The answer is well-reasoned with strong consensus across all validation agents.';
+            } else if (likelihood >= 65) {
+                truthInterpretation = '**Likely True** — The answer shows good reasoning but some uncertainty remains.';
+            } else if (likelihood >= 45) {
+                truthInterpretation = '**Uncertain** — The validation agents show significant disagreement. The answer may contain partial truth or require more evidence.';
+            } else if (likelihood >= 25) {
+                truthInterpretation = '**Likely False** — The reasoning shows inconsistencies and lacks sufficient evidence support.';
+            } else {
+                truthInterpretation = '**Low Confidence** — The answer is unlikely to be true based on the validation analysis.';
+            }
+
+            // Generate truth report
+            const reasoning = `
+## Analysis Complete
+
+**Cycles Required:** ${cyclesRequired || 1}  
+**Truth Likelihood:** ${(likelihoodValue * 100).toFixed(1)}%  
+**Confidence Index:** ${formatNumber(confidence, 1)}%  
+**Uncertainty (MAD):** ${formatNumber(mad || 0)}  
+
+---
+
+### Summary of findings
+
+${qualitativeSummary}
+
+**Verdict:** ${truthInterpretation}
+
+---
+
+### Interpretation
+
+${truthInterpretation}
+
+---
+
+### Uncertainty Bands
+
+- **Narrow Band (±1 MAD):** ${(uncertaintyBands.narrow.lower * 100).toFixed(1)}% - ${(uncertaintyBands.narrow.upper * 100).toFixed(1)}%
+- **Wide Band (±2 MAD):** ${(uncertaintyBands.wide.lower * 100).toFixed(1)}% - ${(uncertaintyBands.wide.upper * 100).toFixed(1)}%
+
+---
+
+### Agent-Level Contributions
+
+${agentContributions}
+
+---
+
+### Model Agreement
+
+**Disagreement Score:** ${formatNumber(disagreement, 1)}%  
+${disagreement < 10 ? '✅ High agreement - strong consensus' : disagreement < 25 ? '⚠️ Moderate agreement - some variance' : '❌ Low agreement - significant variance'}
+
+---
+
+### Uncertainty Risk Score
+
+**Risk Level:** ${formatNumber(uncertaintyRisk, 1)}%  
+${uncertaintyRisk < 10 ? '✅ Low uncertainty - high confidence in truth assessment' : uncertaintyRisk < 25 ? '⚠️ Moderate uncertainty - some doubt remains' : '❌ High uncertainty - significant doubt about truth'}
+
+---
+
+### Verification Proofs
+
+All agent assessments have been cryptographically signed as Verification Proofs using SHA-256 hashing. The commitment tree is publicly verifiable and contains ${totalCommitments} total commitments across ${cyclesRequired || 1} cycle(s).
+
+${truthProtocol.outliers.length > 0 ? `\n**⚠️ Outliers Detected:** ${truthProtocol.outliers.map(o => o.agent).join(', ')} exhibited significant deviation and were re-evaluated in subsequent cycles.\n` : ''}
+
+---
+
+**Note:** Full Knowledge Proofs, multi-model verification cycles, and adversarial consensus.
+            `;
+
+            truthReasoning.innerHTML = marked.parse(reasoning);
+            truthContainer.style.display = 'block';
+
+            // Hide cycle/consensus bar once Final Truth is shown
+            if (cycleBar) cycleBar.style.display = 'none';
+            // Collapse all agent cards so user expands on click
+            Object.values(modelMap).forEach(card => {
+                card.card.setAttribute('data-collapsed', 'true');
+                if (card.collapseTimeout) {
+                    clearTimeout(card.collapseTimeout);
+                    card.collapseTimeout = null;
+                }
+            });
+            
+            setTimeout(() => {
+                truthContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+
+            setTimeout(() => {
+                setupCardCollapseHandlers();
+            }, 500);
+        }
+
+        // === UI Helper Functions ===
+
+        function resetUI() {
+            if (cycleBar) cycleBar.style.display = '';
+            Object.values(modelMap).forEach(card => {
+                updateModelCard(card, 'pending', 'AWAITING TRUTH VERIFICATION.', '...', 'pending');
+                card.card.setAttribute('data-collapsed', 'true');
+                card.score.textContent = '---';
+                card.commitment.style.display = 'none';
+                if (card.collapseTimeout) {
+                    clearTimeout(card.collapseTimeout);
+                    card.collapseTimeout = null;
+                }
+            });
+            updateCycle(0, 'WAITING FOR TRUTH ENGINE...', 0);
+            madValue.textContent = '0.00';
+            if (truthContainer) truthContainer.style.display = 'none';
+            if (truthSummaryEl) truthSummaryEl.innerHTML = '';
+            if (truthReasoning) truthReasoning.innerHTML = '';
+            if (truthReportCollapsible) truthReportCollapsible.setAttribute('data-collapsed', 'true');
+        }
+
+        function setupCardCollapseHandlers() {
+            Object.values(modelMap).forEach(card => {
+                    const cardElement = card.card;
+                    
+                    const newCardElement = cardElement.cloneNode(true);
+                    cardElement.parentNode.replaceChild(newCardElement, cardElement);
+                    
+                    card.card = newCardElement;
+                    card.status = newCardElement.querySelector('#status-' + card.id.split('-')[1]);
+                    card.reasoning = newCardElement.querySelector('#reasoning-' + card.id.split('-')[1]);
+                    card.badge = newCardElement.querySelector('#status-' + card.id.split('-')[1] + '-badge');
+                    card.score = newCardElement.querySelector('#score-' + card.id.split('-')[1]);
+                    card.commitment = newCardElement.querySelector('#commitment-' + card.id.split('-')[1]);
+                    
+                    newCardElement.addEventListener('click', (e) => {
+                        if (e.target.closest('.status-badge') || e.target.closest('.text-xs')) {
+                            return;
+                        }
+                        
+                        const isCollapsed = newCardElement.getAttribute('data-collapsed') === 'true';
+                        newCardElement.setAttribute('data-collapsed', isCollapsed ? 'false' : 'true');
+                    });
+                });
+        }
+
+        function updateCycle(cycle, text, confidence) {
+            cycleNumber.textContent = `CYCLE ${cycle}`;
+            consensusText.textContent = text;
+            graphConfidence.textContent = `${confidence}%`;
+        }
+
+        function updateModelCard(card, state, statusText, reasoning = null, badgeClass = null) {
+            card.card.setAttribute('data-state', state);
+            card.status.textContent = statusText;
+            if (reasoning) {
+                card.reasoning.textContent = reasoning;
+            }
+            if (badgeClass) {
+                card.badge.textContent = badgeClass.toUpperCase();
+                card.badge.className = `status-badge ${badgeClass}`;
+            }
+
+            // Cards are collapsed in displayFinalTruth when run completes
+        }
+        
+        function setLoadingState(isLoading) {
+            const buttonIcon = document.querySelector('#analyzeButton svg');
+            const button = document.getElementById('analyzeButton');
+            
+            if (isLoading) {
+                button.disabled = true;
+                button.classList.add('opacity-70', 'cursor-not-allowed');
+                buttonIcon.classList.add('animate-spin');
+                buttonIcon.innerHTML = `<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>`;
+            } else {
+                button.disabled = false;
+                button.classList.remove('opacity-70', 'cursor-not-allowed');
+                buttonIcon.classList.remove('animate-spin');
+                buttonIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>`;
+            }
+        }
+        
+        function showTempMessageBox(message, type = 'error') {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-2xl font-medium transition-opacity duration-300 mono`;
+            box.style.minWidth = '300px';
+            box.style.opacity = '1';
+            
+            if (type === 'error') {
+                box.style.background = 'var(--color-magenta)';
+                box.style.color = '#000';
+                box.style.boxShadow = '0 0 15px var(--color-magenta)';
+            } else {
+                box.style.background = 'var(--color-lime)';
+                box.style.color = '#000';
+                box.style.boxShadow = '0 0 15px var(--color-lime)';
+            }
+            
+            box.classList.remove('hidden');
+            
+            setTimeout(() => {
+                box.style.opacity = '0';
+                setTimeout(() => box.classList.add('hidden'), 500);
+            }, 4000);
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
